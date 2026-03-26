@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+httpx
+torch
+torchaudio
+numpy
+soundfile
+silero
+transformers
+accelerate
