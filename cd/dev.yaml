@@ -48,8 +48,6 @@ jobs:
           export MLFLOW_TRACKING_URI="${{ secrets.MLFLOW_TRACKING_URI }}"
           export CUDA_VISIBLE_DEVICES="${{ secrets.CUDA_VISIBLE_DEVICES }}"
           
-          # Остановка старых контейнеров
-          docker compose down
           
           # Обновление кода
           git pull --rebase
