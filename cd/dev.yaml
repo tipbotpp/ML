@@ -1,0 +1,100 @@
+name: Pull and Deploy to Dev (ML)
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  run_pull:
+    name: Run Pull
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Start
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            🚀 **Запуск деплоя ML-сервиса на dev-окружение**
+            Репозиторий: `${{ github.repository }}`
+            Ветка: `${{ github.ref }}`
+            Автор: `${{ github.actor }}`
+            Коммит: `${{ github.event.head_commit.message }}`
+            🔗 [Открыть коммит](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
+      - name: Install SSH keys
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} > ~/.ssh/known_hosts
+
+      - name: Connect and Deploy ML Service
+        run: |
+          ssh -A -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/id_ed25519
+          cd ${{ secrets.DEV_WORK_DIR }}
+          git checkout ${{ secrets.DEV_BRANCH }}
+          
+          # Загрузка переменных окружения из .env
+          export $(grep -v '^#' .env | xargs)
+          
+          # Дополнительные ML-специфичные переменные
+          export MODEL_PATH="${{ secrets.MODEL_PATH }}"
+          export MLFLOW_TRACKING_URI="${{ secrets.MLFLOW_TRACKING_URI }}"
+          export CUDA_VISIBLE_DEVICES="${{ secrets.CUDA_VISIBLE_DEVICES }}"
+          
+          # Остановка старых контейнеров
+          docker compose down
+          
+          # Обновление кода
+          git pull --rebase
+          
+          # Установка/обновление зависимостей через pip
+          if [ -f "requirements.txt" ]; then
+            pip install --upgrade pip
+            pip install -r requirements.txt
+          fi
+          
+          # Если есть отдельный файл для dev окружения
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+          
+          # Запуск через docker compose 
+          docker compose up --build -d ml-service
+          
+          # Или запуск напрямую через Python 
+          # nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > logs/ml_service.log 2>&1 &
+          EOF
+
+      - name: Notify Success
+        if: success()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ✅ **Деплой ML-сервиса на dev-окружение завершён успешно**
+            🔗 [Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Notify Failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
+          message: |
+            ❌ **Ошибка при деплое ML-сервиса на dev-окружение**
+            Репозиторий: `${{ github.repository }}`
+            Ветка: `${{ github.ref }}`
+            🔗 [Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+      - name: Cleanup
+        run: rm -rf ~/.ssh
