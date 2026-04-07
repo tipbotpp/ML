@@ -11,3 +11,6 @@ soundfile
 silero
 transformers
 accelerate
+transformers
+torch
+numpy

@@ -10,8 +10,7 @@ class Silero:
             repo_or_dir="snakers4/silero-models",
             model="silero_tts",
             language="ru",
-            speaker="v4_ru",
-            trust_repo=True
+            speaker="v4_ru"
         )
 
         self.sample_rate = 48000
