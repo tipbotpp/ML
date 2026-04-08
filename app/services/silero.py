@@ -19,7 +19,7 @@ class Silero:
 
         audio = self.model.apply_tts(
             text=text,
-            speaker="baya",
+            speaker="aidar",
             sample_rate=self.sample_rate
         )
 
