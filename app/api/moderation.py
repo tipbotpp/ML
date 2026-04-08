@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends
 from app.exceptions import (
-    ToxicityException,
     StopWordException,
     TextTooLongException
 )
@@ -25,9 +24,11 @@ async def moderation_check(
     toxicity = rubert.predict(text)
 
     if toxicity["is_toxic"]:
-        raise ToxicityException(
-            toxicity["toxicity_score"]
-        )
+        return {
+            "blocked": True,
+            "reason": "toxicity",
+            "toxicity_score": toxicity["toxicity_score"]
+        }
 
     for word in request.stop_words:
 
