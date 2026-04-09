@@ -13,4 +13,4 @@ class TTSRequest(BaseModel):
 class TTSResponse(BaseModel):
     audio_key: str
     duration_sec: float
-    donation_id: str
+    donation_id: int
