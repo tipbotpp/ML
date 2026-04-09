@@ -42,5 +42,6 @@ async def synthesize(
         )
 
     except Exception as e:
-        logger.error("tts.synthesize failed", exc_info=True)
+        import traceback
+        logger.error("tts.synthesize failed", error=traceback.format_exc())
         raise TTSGenerationException()
