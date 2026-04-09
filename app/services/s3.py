@@ -37,4 +37,4 @@ class S3Client:
             Body=data,
             ContentType=content_type,
         )
-        return f"{bucket}/{key}"
+        return key
