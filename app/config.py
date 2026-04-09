@@ -3,7 +3,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
-    API_KEY: str = "ml_secret_key"
+    INTERNAL_SECRET: str = "ml_secret_key"
+
+    LOG_LEVEL: str = "INFO"
 
     DEVICE: str = "cpu"
 
@@ -15,6 +17,11 @@ class Settings(BaseSettings):
 
     TTS_SPEAKER: str = "aidar"
 
+    # MinIO / S3
+    S3_ENDPOINT: str = "http://localhost:9000"
+    S3_ACCESS_KEY: str = "minioadmin"
+    S3_SECRET_KEY: str = "minioadmin"
+    S3_BUCKET_AUDIO: str = "audio"
 
     class Config:
         env_file = ".env"
