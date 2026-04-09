@@ -1,6 +1,12 @@
+import io
+
 import torch
 import soundfile as sf
-import uuid
+
+from app.config import settings
+
+
+VALID_VOICES = {"aidar", "baya", "kseniya", "xenia", "eugene"}
 
 
 class Silero:
@@ -12,22 +18,24 @@ class Silero:
             language="ru",
             speaker="v4_ru"
         )
+        self.sample_rate = settings.TTS_SAMPLE_RATE
 
-        self.sample_rate = 48000
-
-    def generate(self, text: str):
+    def generate(self, text: str, voice: str | None = None) -> tuple[bytes, float]:
+        speaker = voice if voice in VALID_VOICES else settings.TTS_SPEAKER
 
         audio = self.model.apply_tts(
             text=text,
-            speaker="aidar",
-            sample_rate=self.sample_rate
+            speaker=speaker,
+            sample_rate=self.sample_rate,
         )
 
-        file = f"{uuid.uuid4()}.wav"
+        duration_sec = len(audio) / self.sample_rate
 
-        sf.write(file, audio, self.sample_rate)
+        buf = io.BytesIO()
+        sf.write(buf, audio, self.sample_rate, format="WAV")
+        buf.seek(0)
 
-        return file
+        return buf.read(), duration_sec
 
 
 silero = Silero()
