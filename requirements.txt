@@ -4,6 +4,8 @@ pydantic
 pydantic-settings
 python-dotenv
 httpx
+structlog
+aiobotocore
 torch
 torchaudio
 numpy

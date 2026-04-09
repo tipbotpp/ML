@@ -1,28 +1,47 @@
-import time
+import uuid
 
 from fastapi import APIRouter, Depends
 
-from app.schemas.tts import TTSRequest
+from app.exceptions import TTSGenerationException
+from app.schemas.tts import TTSRequest, TTSResponse
 from app.services.silero import silero
-from app.dependencies import verify_api_key
+from app.services.s3 import S3Client
+from app.dependencies import verify_internal_secret, get_s3
+from app.config import settings
 
+from app.services.logger import get_logger
+
+logger = get_logger().bind(module="tts")
 
 router = APIRouter()
 
 
-@router.post("/generate/audio")
-async def generate(
+@router.post("/tts/synthesize", response_model=TTSResponse)
+async def synthesize(
     request: TTSRequest,
-    _: str = Depends(verify_api_key)
+    s3: S3Client = Depends(get_s3),
+    _ = Depends(verify_internal_secret),
 ):
+    try:
+        text = f"{request.donor_name} задонатил {request.amount} монет. {request.text}"
 
-    start = time.time()
+        audio_bytes, duration_sec = silero.generate(text, voice=request.voice)
 
-    file = silero.generate(request.text)
+        key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
+        audio_key = await s3.upload(
+            bucket=settings.S3_BUCKET_AUDIO,
+            key=key,
+            data=audio_bytes,
+            content_type="audio/wav",
+        )
 
-    latency = time.time() - start
+        return TTSResponse(
+            audio_key=audio_key,
+            duration_sec=duration_sec,
+            donation_id=request.donation_id,
+        )
 
-    return {
-        "file": file,
-        "latency": latency
-    }
+    except Exception as e:
+        import traceback
+        logger.error("tts.synthesize failed", error=traceback.format_exc())
+        raise TTSGenerationException()

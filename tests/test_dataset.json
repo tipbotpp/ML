@@ -1,0 +1,41 @@
+[
+    {
+      "text": "Привет стример ты лучший",
+      "expected": "ok"
+    },
+  
+    {
+      "text": "Ты тупой",
+      "expected": "toxic"
+    },
+  
+    {
+      "text": "Спасибо за стрим",
+      "expected": "ok"
+    },
+  
+    {
+      "text": "идиот стример",
+      "expected": "toxic"
+    },
+  
+    {
+      "text": "Когда следующий стрим?",
+      "expected": "ok"
+    },
+  
+    {
+      "text": "ненавижу тебя",
+      "expected": "toxic"
+    },
+  
+    {
+      "text": "Ты лучший стример",
+      "expected": "ok"
+    },
+  
+    {
+      "text": "стример тварь",
+      "expected": "toxic"
+    }
+  ]
