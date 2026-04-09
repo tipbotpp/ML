@@ -9,6 +9,10 @@ from app.services.s3 import S3Client
 from app.dependencies import verify_internal_secret, get_s3
 from app.config import settings
 
+from app.services.logger import get_logger
+
+logger = get_logger().bind(module="tts")
+
 router = APIRouter()
 
 
@@ -37,5 +41,6 @@ async def synthesize(
             donation_id=request.donation_id,
         )
 
-    except Exception:
+    except Exception as e:
+        logger.error("tts.synthesize failed", exc_info=True)
         raise TTSGenerationException()
