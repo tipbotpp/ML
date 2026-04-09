@@ -5,7 +5,7 @@ from typing import List, Optional
 class ModerationRequest(BaseModel):
     text: str
     stopwords: List[str] = []
-    streamer_id: str
+    streamer_id: int
 
 
 class ModerationResponse(BaseModel):
