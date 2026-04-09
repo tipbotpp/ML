@@ -7,7 +7,7 @@ class TTSRequest(BaseModel):
     donor_name: str
     amount: int
     voice: Optional[str] = None
-    donation_id: str
+    donation_id: int
 
 
 class TTSResponse(BaseModel):
