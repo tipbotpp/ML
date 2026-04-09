@@ -34,14 +34,14 @@ async def health():
     return {"status": "ok"}
 
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error("Unhandled exception", error=str(exc), traceback=traceback.format_exc())
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": True,
-            "code": "INTERNAL_ERROR",
-            "message": "Internal server error",
-        },
-    )
+# @app.exception_handler(Exception)
+# async def global_exception_handler(request: Request, exc: Exception):
+#     logger.error("Unhandled exception", error=str(exc), traceback=traceback.format_exc())
+#     return JSONResponse(
+#         status_code=500,
+#         content={
+#             "error": True,
+#             "code": "INTERNAL_ERROR",
+#             "message": "Internal server error",
+#         },
+#     )
