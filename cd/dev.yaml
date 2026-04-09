@@ -40,20 +40,21 @@ jobs:
           cd ${{ secrets.DEV_WORK_DIR }}
           git checkout ${{ secrets.DEV_BRANCH }}
           
-          # Загрузка переменных окружения из .env
-          export $(grep -v '^#' .env | xargs)
-          
-          # ML-специфичные переменные окружения
-          export API_KEY="${{ secrets.ML_API_KEY }}"
-          export DEVICE="${{ secrets.DEVICE }}"
-          export TOXIC_THRESHOLD="${{ secrets.TOXIC_THRESHOLD }}"
-          export MAX_TEXT_LENGTH="${{ secrets.MAX_TEXT_LENGTH }}"
-          export TTS_SAMPLE_RATE="${{ secrets.TTS_SAMPLE_RATE }}"
-          export TTS_SPEAKER="${{ secrets.TTS_SPEAKER }}"
-          export LOG_LEVEL="${{ secrets.LOG_LEVEL }}"
-          
-          # Обновление кода
+          export DOCKER_BUILDKIT=1
           git pull --rebase
+          
+          rm -f .env
+          touch .env
+          echo 'API_ID=${{ secrets.ML_API_ID }}' >> .env
+          echo 'API_HASH=${{ secrets.ML_API_HASH }}' >> .env
+          echo 'START_DATE=${{ secrets.START_DATE }}' >> .env
+          echo 'API_KEY=${{ secrets.ML_API_KEY }}' >> .env
+          echo 'DEVICE=${{ secrets.DEVICE }}' >> .env
+          echo 'TOXIC_THRESHOLD=${{ secrets.TOXIC_THRESHOLD }}' >> .env
+          echo 'MAX_TEXT_LENGTH=${{ secrets.MAX_TEXT_LENGTH }}' >> .env
+          echo 'TTS_SAMPLE_RATE=${{ secrets.TTS_SAMPLE_RATE }}' >> .env
+          echo 'TTS_SPEAKER=${{ secrets.TTS_SPEAKER }}' >> .env
+          echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
           
           # Установка/обновление зависимостей через pip
           if [ -f "requirements.txt" ]; then
@@ -68,6 +69,7 @@ jobs:
           
           # Запуск через docker compose с указанием пути к файлу
           docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up --build -d backend
+          EOF
 
       - name: Notify Success
         if: success()
