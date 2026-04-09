@@ -4,6 +4,8 @@ pydantic
 pydantic-settings
 python-dotenv
 httpx
+structlog
+aiobotocore
 torch
 torchaudio
 numpy
@@ -11,6 +13,3 @@ soundfile
 silero
 transformers
 accelerate
-transformers
-torch
-numpy
