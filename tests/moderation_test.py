@@ -6,7 +6,7 @@ import requests
 URL = "http://localhost:8000/moderation/check"
 
 HEADERS = {
-    "x-api-key": "ml_secret_key"
+    "x-internal-secret": "ml_secret_key"
 }
 
 
@@ -35,15 +35,13 @@ def run_test():
         start = time.time()
 
         response = requests.post(
-
             URL,
-
             json={
-                "text": text
+                "text": text,
+                "stopwords": [],
+                "streamer_id": "test_streamer",
             },
-
-            headers=HEADERS
-
+            headers=HEADERS,
         )
 
         latency = time.time() - start
@@ -52,9 +50,7 @@ def run_test():
 
         result = response.json()
 
-        blocked = result.get("blocked", False)
-
-        predicted = "toxic" if blocked else "ok"
+        predicted = "toxic" if result.get("verdict") == "blocked" else "ok"
 
         if predicted == expected:
             correct += 1
@@ -62,6 +58,8 @@ def run_test():
         print("Text:", text)
         print("Expected:", expected)
         print("Predicted:", predicted)
+        print("Verdict:", result.get("verdict"))
+        print("Toxicity score:", result.get("toxicity_score"))
         print("Latency:", latency)
 
     accuracy = correct / total
