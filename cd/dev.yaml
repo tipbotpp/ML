@@ -27,22 +27,13 @@ jobs:
             🔗 [Открыть коммит](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
 
       - name: Install SSH keys
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.DEV_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} > ~/.ssh/known_hosts
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
 
-      - name: Connect and Deploy ML Service
-        run: |
-          ssh -A -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
-          eval $(ssh-agent -s)
-          ssh-add ~/.ssh/id_ed25519
-          cd ${{ secrets.DEV_WORK_DIR }}
-          git checkout ${{ secrets.DEV_BRANCH }}
-          
-          export DOCKER_BUILDKIT=1
-          git pull --rebase
-          
+      - name: Add known hosts
+        run: ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
+
           rm -f .env
           touch .env
           echo 'API_ID=${{ secrets.ML_API_ID }}' >> .env
@@ -56,20 +47,6 @@ jobs:
           echo 'TTS_SPEAKER=${{ secrets.TTS_SPEAKER }}' >> .env
           echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
           
-          # Установка/обновление зависимостей через pip
-          if [ -f "requirements.txt" ]; then
-            pip install --upgrade pip
-            pip install -r requirements.txt
-          fi
-          
-          # Если есть отдельный файл для dev окружения
-          if [ -f "requirements-dev.txt" ]; then
-            pip install -r requirements-dev.txt
-          fi
-          
-          # Запуск через docker compose с указанием пути к файлу
-          docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up --build -d backend
-          EOF
 
       - name: Notify Success
         if: success()
