@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.tts import router as tts
 from app.api.moderation import router as moderation
+from app.api.image import router as image
 from app.middlewares.logging import HTTPLoggingMiddleware
 from app.services.logger import get_logger
 from app.services.s3 import S3Client
@@ -27,6 +28,7 @@ app.add_middleware(HTTPLoggingMiddleware)
 
 app.include_router(tts)
 app.include_router(moderation)
+app.include_router(image)
 
 
 @app.get("/health")
