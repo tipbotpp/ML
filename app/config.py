@@ -22,6 +22,19 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
     S3_BUCKET_AUDIO: str = "audio"
+    S3_BUCKET_IMAGE: str = "images"
+
+    IMAGE_PROVIDER: str = "kandinsky"
+    IMAGE_DEFAULT_STYLE: str = "DEFAULT"
+    IMAGE_WIDTH: int = 1024
+    IMAGE_HEIGHT: int = 1024
+    IMAGE_NUM_IMAGES: int = 1
+    IMAGE_TIMEOUT_SEC: float = 120.0
+
+    KANDINSKY_API_URL: str = "https://api-key.fusionbrain.ai"
+    KANDINSKY_API_KEY: str = ""
+    KANDINSKY_SECRET_KEY: str = ""
+    KANDINSKY_MODEL_ID: int | None = None
 
     class Config:
         env_file = ".env"
