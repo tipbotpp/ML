@@ -31,23 +31,32 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
 
-      - name: Add known hosts
-        run: ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
-
-          rm -f .env
-          touch .env
-          echo 'API_ID=${{ secrets.ML_API_ID }}' >> .env
-          echo 'API_HASH=${{ secrets.ML_API_HASH }}' >> .env
-          echo 'START_DATE=${{ secrets.START_DATE }}' >> .env
-          echo 'API_KEY=${{ secrets.ML_API_KEY }}' >> .env
-          echo 'DEVICE=${{ secrets.DEVICE }}' >> .env
-          echo 'TOXIC_THRESHOLD=${{ secrets.TOXIC_THRESHOLD }}' >> .env
-          echo 'MAX_TEXT_LENGTH=${{ secrets.MAX_TEXT_LENGTH }}' >> .env
-          echo 'TTS_SAMPLE_RATE=${{ secrets.TTS_SAMPLE_RATE }}' >> .env
-          echo 'TTS_SPEAKER=${{ secrets.TTS_SPEAKER }}' >> .env
-          echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
-          
-
+      - name: Deploy ML service
+  run: |
+    ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
+    
+    ssh -A -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
+      cd ${{ secrets.DEV_WORK_DIR }}
+      git checkout ${{ secrets.DEV_BRANCH }}
+      git pull --rebase
+      
+      rm -f .env
+      touch .env
+      echo 'API_ID=${{ secrets.ML_API_ID }}' >> .env
+      echo 'API_HASH=${{ secrets.ML_API_HASH }}' >> .env
+      echo 'START_DATE=${{ secrets.START_DATE }}' >> .env
+      echo 'API_KEY=${{ secrets.ML_API_KEY }}' >> .env
+      echo 'DEVICE=${{ secrets.DEVICE }}' >> .env
+      echo 'TOXIC_THRESHOLD=${{ secrets.TOXIC_THRESHOLD }}' >> .env
+      echo 'MAX_TEXT_LENGTH=${{ secrets.MAX_TEXT_LENGTH }}' >> .env
+      echo 'TTS_SAMPLE_RATE=${{ secrets.TTS_SAMPLE_RATE }}' >> .env
+      echo 'TTS_SPEAKER=${{ secrets.TTS_SPEAKER }}' >> .env
+      echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
+      
+      export DOCKER_BUILDKIT=1
+      docker compose up -d --build
+      
+      EOF
       - name: Notify Success
         if: success()
         uses: appleboy/telegram-action@master
