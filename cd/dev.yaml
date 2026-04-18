@@ -46,15 +46,31 @@ jobs:
       echo 'API_HASH=${{ secrets.ML_API_HASH }}' >> .env
       echo 'START_DATE=${{ secrets.START_DATE }}' >> .env
       echo 'API_KEY=${{ secrets.ML_API_KEY }}' >> .env
+      echo 'INTERNAL_SECRET=${{ secrets.INTERNAL_SECRET }}' >> .env
+      echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
       echo 'DEVICE=${{ secrets.DEVICE }}' >> .env
       echo 'TOXIC_THRESHOLD=${{ secrets.TOXIC_THRESHOLD }}' >> .env
       echo 'MAX_TEXT_LENGTH=${{ secrets.MAX_TEXT_LENGTH }}' >> .env
       echo 'TTS_SAMPLE_RATE=${{ secrets.TTS_SAMPLE_RATE }}' >> .env
       echo 'TTS_SPEAKER=${{ secrets.TTS_SPEAKER }}' >> .env
-      echo 'LOG_LEVEL=${{ secrets.LOG_LEVEL }}' >> .env
+      echo 'S3_ENDPOINT=${{ secrets.S3_ENDPOINT }}' >> .env
+      echo 'S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}' >> .env
+      echo 'S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}' >> .env
+      echo 'S3_BUCKET_AUDIO=${{ secrets.S3_BUCKET_AUDIO }}' >> .env
+      echo 'S3_BUCKET_IMAGE=${{ secrets.S3_BUCKET_IMAGE }}' >> .env
+      echo 'IMAGE_PROVIDER=${{ secrets.IMAGE_PROVIDER }}' >> .env
+      echo 'IMAGE_DEFAULT_STYLE=${{ secrets.IMAGE_DEFAULT_STYLE }}' >> .env
+      echo 'IMAGE_WIDTH=${{ secrets.IMAGE_WIDTH }}' >> .env
+      echo 'IMAGE_HEIGHT=${{ secrets.IMAGE_HEIGHT }}' >> .env
+      echo 'IMAGE_NUM_IMAGES=${{ secrets.IMAGE_NUM_IMAGES }}' >> .env
+      echo 'IMAGE_TIMEOUT_SEC=${{ secrets.IMAGE_TIMEOUT_SEC }}' >> .env
+      echo 'KANDINSKY_API_URL=${{ secrets.KANDINSKY_API_URL }}' >> .env
+      echo 'KANDINSKY_API_KEY=${{ secrets.KANDINSKY_API_KEY }}' >> .env
+      echo 'KANDINSKY_SECRET_KEY=${{ secrets.KANDINSKY_SECRET_KEY }}' >> .env
+      echo 'KANDINSKY_MODEL_ID=${{ secrets.KANDINSKY_MODEL_ID }}' >> .env
       
       export DOCKER_BUILDKIT=1
-      docker compose up -d --build
+      docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build
       
     EOF
       - name: Notify Success
