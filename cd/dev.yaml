@@ -56,7 +56,7 @@ jobs:
       export DOCKER_BUILDKIT=1
       docker compose up -d --build
       
-      EOF
+    EOF
       - name: Notify Success
         if: success()
         uses: appleboy/telegram-action@master
