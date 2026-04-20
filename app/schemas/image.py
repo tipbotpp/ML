@@ -13,6 +13,7 @@ class ImageGenerationRequest(BaseModel):
     width: Optional[int] = None
     height: Optional[int] = None
     provider: Literal["kandinsky", "sd"] = "kandinsky"
+    nsfw_check: Optional[bool] = None
 
 
 class ImageGenerationResponse(BaseModel):
@@ -22,3 +23,5 @@ class ImageGenerationResponse(BaseModel):
     prompt: str
     width: int
     height: int
+    nsfw_detected: Optional[bool] = None
+    nsfw_score: Optional[float] = None
