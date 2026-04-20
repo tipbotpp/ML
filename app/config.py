@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     IMAGE_HEIGHT: int = 1024
     IMAGE_NUM_IMAGES: int = 1
     IMAGE_TIMEOUT_SEC: float = 120.0
+    IMAGE_NSFW_CHECK_ENABLED: bool = True
+    IMAGE_NSFW_THRESHOLD: float = 0.5
+    
+    # Performance optimization settings
+    IMAGE_POLL_INTERVAL_INITIAL: float = 1.0
+    IMAGE_POLL_INTERVAL_MAX: float = 3.0
+    IMAGE_POLL_BACKOFF_FACTOR: float = 1.2
 
     KANDINSKY_API_URL: str = "https://api-key.fusionbrain.ai"
     KANDINSKY_API_KEY: str = ""
