@@ -13,3 +13,5 @@ soundfile
 silero
 transformers
 accelerate
+Pillow
+python-multipart
