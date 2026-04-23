@@ -73,7 +73,7 @@ jobs:
             export DOCKER_BUILDKIT=1
             docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build ml
           
-            docker builder prune -f --keep-storage 2GB
+            docker builder prune -f --filter until=24h
           EOF
 
       - name: Notify Success
