@@ -29,7 +29,7 @@ async def synthesize(
 
         key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
         audio_key = await s3.upload(
-            bucket=settings.S3_BUCKET_AUDIO,
+            bucket=settings.S3_BUCKET,
             key=key,
             data=audio_bytes,
             content_type="audio/wav",
