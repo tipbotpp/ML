@@ -31,34 +31,50 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
 
+      - name: Add known hosts
+        run: ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy ML service
         run: |
-          ssh-keyscan -p ${{ secrets.DEV_SSH_PORT }} -H ${{ secrets.DEV_SSH_HOST }} >> ~/.ssh/known_hosts
-          
           ssh -A -p ${{ secrets.DEV_SSH_PORT }} ${{ secrets.DEV_SSH_USER }}@${{ secrets.DEV_SSH_HOST }} << 'EOF'
             cd ${{ secrets.DEV_WORK_DIR }}
-            git checkout dev
+            git checkout ${{ github.ref_name }}
             git pull --rebase
-            
+
             rm -f .env
             touch .env
-            echo "API_ID=${{ secrets.ML_API_ID }}" >> .env
-            echo "API_HASH=${{ secrets.ML_API_HASH }}" >> .env
-            echo "API_KEY=${{ secrets.ML_API_KEY }}" >> .env
-            echo "INTERNAL_SECRET=${{ secrets.INTERNAL_SECRET }}" >> .env
-            echo "S3_ENDPOINT=${{ secrets.S3_ENDPOINT }}" >> .env
-            echo "S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}" >> .env
-            echo "S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}" >> .env
-            echo "S3_BUCKET_AUDIO=${{ secrets.S3_BUCKET_AUDIO }}" >> .env
-            echo "S3_BUCKET_IMAGE=${{ secrets.S3_BUCKET_IMAGE }}" >> .env
-            echo "KANDINSKY_API_URL=${{ secrets.KANDINSKY_API_URL }}" >> .env
-            echo "KANDINSKY_API_KEY=${{ secrets.KANDINSKY_API_KEY }}" >> .env
-            echo "KANDINSKY_SECRET_KEY=${{ secrets.KANDINSKY_SECRET_KEY }}" >> .env
-            echo "KANDINSKY_MODEL_ID=${{ secrets.KANDINSKY_MODEL_ID }}" >> .env
-            
+            echo "INTERNAL_SECRET='${{ secrets.DEV_INTERNAL_SECRET }}'" >> .env
+            echo "LOG_LEVEL='${{ secrets.DEV_LOG_LEVEL }}'" >> .env
+            echo "DEVICE='${{ secrets.DEV_DEVICE }}'" >> .env
+            echo "TOXIC_THRESHOLD=${{ secrets.DEV_TOXIC_THRESHOLD }}" >> .env
+            echo "MAX_TEXT_LENGTH=${{ secrets.DEV_MAX_TEXT_LENGTH }}" >> .env
+            echo "TTS_SAMPLE_RATE=${{ secrets.DEV_TTS_SAMPLE_RATE }}" >> .env
+            echo "TTS_SPEAKER='${{ secrets.DEV_TTS_SPEAKER }}'" >> .env
+            echo "S3_HOST='${{ secrets.DEV_S3_HOST }}'" >> .env
+            echo "S3_ACCESS_KEY='${{ secrets.DEV_S3_ACCESS_KEY }}'" >> .env
+            echo "S3_SECRET_KEY='${{ secrets.DEV_S3_SECRET_KEY }}'" >> .env
+            echo "S3_BUCKET='${{ secrets.DEV_S3_BUCKET }}'" >> .env
+            echo "IMAGE_PROVIDER='${{ secrets.DEV_IMAGE_PROVIDER }}'" >> .env
+            echo "IMAGE_DEFAULT_STYLE='${{ secrets.DEV_IMAGE_DEFAULT_STYLE }}'" >> .env
+            echo "IMAGE_WIDTH=${{ secrets.DEV_IMAGE_WIDTH }}" >> .env
+            echo "IMAGE_HEIGHT=${{ secrets.DEV_IMAGE_HEIGHT }}" >> .env
+            echo "IMAGE_NUM_IMAGES=${{ secrets.DEV_IMAGE_NUM_IMAGES }}" >> .env
+            echo "IMAGE_TIMEOUT_SEC=${{ secrets.DEV_IMAGE_TIMEOUT_SEC }}" >> .env
+            echo "IMAGE_NSFW_CHECK_ENABLED=${{ secrets.DEV_IMAGE_NSFW_CHECK_ENABLED }}" >> .env
+            echo "IMAGE_NSFW_THRESHOLD=${{ secrets.DEV_IMAGE_NSFW_THRESHOLD }}" >> .env
+            echo "IMAGE_POLL_INTERVAL_INITIAL=${{ secrets.DEV_IMAGE_POLL_INTERVAL_INITIAL }}" >> .env
+            echo "IMAGE_POLL_INTERVAL_MAX=${{ secrets.DEV_IMAGE_POLL_INTERVAL_MAX }}" >> .env
+            echo "IMAGE_POLL_BACKOFF_FACTOR=${{ secrets.DEV_IMAGE_POLL_BACKOFF_FACTOR }}" >> .env
+            echo "KANDINSKY_API_URL='${{ secrets.DEV_KANDINSKY_API_URL }}'" >> .env
+            echo "KANDINSKY_API_KEY='${{ secrets.DEV_KANDINSKY_API_KEY }}'" >> .env
+            echo "KANDINSKY_SECRET_KEY='${{ secrets.DEV_KANDINSKY_SECRET_KEY }}'" >> .env
+            echo "KANDINSKY_MODEL_ID=${{ secrets.DEV_KANDINSKY_MODEL_ID }}" >> .env
+            echo "API_ID=${{ secrets.DEV_ML_API_ID }}" >> .env
+            echo "API_HASH='${{ secrets.DEV_ML_API_HASH }}'" >> .env
+            echo "API_KEY='${{ secrets.DEV_ML_API_KEY }}'" >> .env
+
             export DOCKER_BUILDKIT=1
             docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build ml
-            
           EOF
 
       - name: Notify Success
@@ -84,6 +100,7 @@ jobs:
             Репозиторий: `${{ github.repository }}`
             Ветка: `${{ github.ref }}`
             🔗 [Workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
+
       - name: Cleanup
+        if: always()
         run: rm -rf ~/.ssh
