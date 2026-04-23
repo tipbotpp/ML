@@ -30,6 +30,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY app ./app
 COPY .env ./
 COPY entrypoint.sh ./
+RUN chmod +x /app/entrypoint.sh
 
 RUN mkdir -p /app/models_cache && \
     chown -R appuser:appgroup /app
