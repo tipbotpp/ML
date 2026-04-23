@@ -27,10 +27,9 @@ async def generate_image(
         f"Сообщение: {request.text}"
     )
 
-    image_bytes, provider_style, width, height, nsfw_detected, nsfw_score = await image_generator.generate(
+    image_bytes, provider, width, height, nsfw_detected, nsfw_score = await image_generator.generate(
         prompt=prompt,
         provider=request.provider,
-        style=request.style,
         negative_prompt=request.negative_prompt,
         width=request.width,
         height=request.height,
@@ -55,7 +54,7 @@ async def generate_image(
     return ImageGenerationResponse(
         image_key=image_key,
         donation_id=request.donation_id,
-        provider=request.provider,
+        provider=provider,
         prompt=prompt,
         width=width,
         height=height,
