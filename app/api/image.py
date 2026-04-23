@@ -39,7 +39,7 @@ async def generate_image(
 
     key = f"images/{request.donation_id}/{uuid.uuid4()}.png"
     image_key = await s3.upload(
-        bucket=settings.S3_BUCKET_IMAGE,
+        bucket=settings.S3_BUCKET,
         key=key,
         data=image_bytes,
         content_type="image/png",
