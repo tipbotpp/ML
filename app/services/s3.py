@@ -14,7 +14,7 @@ class S3Client:
     async def __aenter__(self) -> "S3Client":
         self._client = await self._session.create_client(
             "s3",
-            endpoint_url=settings.S3_ENDPOINT,
+            endpoint_url=settings.S3_HOST,
             aws_access_key_id=settings.S3_ACCESS_KEY,
             aws_secret_access_key=settings.S3_SECRET_KEY,
             region_name="us-east-1",
