@@ -15,7 +15,7 @@ COPY requirements.txt ./
 
 # Устанавливаем зависимости в отдельную директорию
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --prefix=/install -r requirements.txt
+    pip install -r requirements.txt
 
 # --- НАЧАЛО: Предзагрузка моделей в слой билдера ---
 # Важно: Мы скачиваем модели от root, но сохраняем их в фиксированную папку /models_cache,
