@@ -68,7 +68,8 @@ RUN groupadd --gid 1000 appgroup && \
 WORKDIR /app
 
 # Копируем установленные зависимости из builder stage
-COPY --from=builder /install /usr/local
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Копируем исходный код приложения
 COPY app ./app
