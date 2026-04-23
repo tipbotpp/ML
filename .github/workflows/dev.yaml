@@ -69,9 +69,6 @@ jobs:
             echo "KANDINSKY_API_KEY='${{ secrets.DEV_KANDINSKY_API_KEY }}'" >> .env
             echo "KANDINSKY_SECRET_KEY='${{ secrets.DEV_KANDINSKY_SECRET_KEY }}'" >> .env
             echo "KANDINSKY_MODEL_ID=${{ secrets.DEV_KANDINSKY_MODEL_ID }}" >> .env
-            echo "API_ID=${{ secrets.DEV_ML_API_ID }}" >> .env
-            echo "API_HASH='${{ secrets.DEV_ML_API_HASH }}'" >> .env
-            echo "API_KEY='${{ secrets.DEV_ML_API_KEY }}'" >> .env
 
             export DOCKER_BUILDKIT=1
             docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build ml
