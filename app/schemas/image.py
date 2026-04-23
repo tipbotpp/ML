@@ -8,11 +8,10 @@ class ImageGenerationRequest(BaseModel):
     donation_id: int
     donor_name: str
     amount: int
-    style: Optional[str] = None
     negative_prompt: Optional[str] = None
     width: Optional[int] = None
     height: Optional[int] = None
-    provider: Literal["kandinsky", "sd"] = "kandinsky"
+    provider: Literal["stable_diffusion", "sd"] = "stable_diffusion"
     nsfw_check: Optional[bool] = None
 
 
