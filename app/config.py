@@ -17,12 +17,8 @@ class Settings(BaseSettings):
 
     TTS_SPEAKER: str = "aidar"
 
-<<<<<<< Updated upstream
     # MinIO / S3
     S3_HOST: str = "http://localhost:9000"
-=======
-    S3_ENDPOINT: str = "http://localhost:9000"
->>>>>>> Stashed changes
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
     S3_BUCKET: str = "audio"
@@ -38,6 +34,14 @@ class Settings(BaseSettings):
     AIRFAIL_API_KEY: str = ""
     AIRFAIL_API_URL: str = "https://app.air.fail/images/flux"
     AIRFAIL_MODEL_ID: str = "flux"
+
+    CACHE_ENABLED: bool = True
+    CACHE_MODERATION_TTL_SECONDS: int = 1800
+    CACHE_TTS_TTL_SECONDS: int = 86400
+    CACHE_IMAGE_TTL_SECONDS: int = 3600
+    CACHE_MAX_ENTRIES: int = 1000
+    CACHE_MAX_MEMORY_MB: float = 500.0
+    CACHE_CLEANUP_INTERVAL_SECONDS: int = 300
 
     class Config:
         env_file = ".env"
