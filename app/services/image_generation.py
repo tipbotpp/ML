@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import logging
 from typing import Any
@@ -9,8 +10,16 @@ from PIL import Image
 
 from app.config import settings
 from app.exceptions import ImageGenerationException, UnsupportedImageProviderException
+from app.services.cache import CacheManager
+from app.utils.request_formatter import ResponseFormatter, ErrorFormatter
 
 logger = logging.getLogger(__name__)
+
+image_cache = CacheManager(
+    default_ttl_seconds=settings.CACHE_IMAGE_TTL_SECONDS,
+    max_entries=settings.CACHE_MAX_ENTRIES,
+    max_memory_mb=settings.CACHE_MAX_MEMORY_MB * 0.2,
+)
 
 
 class ImageGeneratorService:
@@ -40,6 +49,16 @@ class ImageGeneratorService:
 
         raise UnsupportedImageProviderException(provider=provider)
 
+    def _generate_cache_key(
+        self,
+        prompt: str,
+        negative_prompt: str | None,
+        width: int,
+        height: int,
+    ) -> str:
+        cache_data = f"{prompt}:{negative_prompt}:{width}:{height}"
+        return image_cache.generate_key(cache_data)
+
     async def _generate_stable_diffusion(
         self,
         prompt: str,
@@ -56,20 +75,23 @@ class ImageGeneratorService:
         actual_width = width or settings.IMAGE_WIDTH
         actual_height = height or settings.IMAGE_HEIGHT
 
-        headers = {
-            "Authorization": f"Bearer {settings.AIRFAIL_API_KEY}",
-        }
+        cache_key = self._generate_cache_key(prompt, negative_prompt, actual_width, actual_height)
+        
+        if settings.CACHE_ENABLED:
+            cached_result = image_cache.get(cache_key)
+            if cached_result is not None:
+                logger.info(f"Image cache hit: {prompt[:50]}...")
+                return cached_result
 
+        request_body = self._format_request_body(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            width=actual_width,
+            height=actual_height,
+        )
+
+        headers = self._format_request_headers()
         timeout = httpx.Timeout(settings.IMAGE_TIMEOUT_SEC)
-
-        body = {
-            "prompt": prompt,
-            "width": actual_width,
-            "height": actual_height,
-        }
-
-        if negative_prompt:
-            body["negative_prompt"] = negative_prompt
 
         try:
             async with httpx.AsyncClient(
@@ -78,7 +100,7 @@ class ImageGeneratorService:
                 response = await client.post(
                     settings.AIRFAIL_API_URL,
                     headers=headers,
-                    json=body,
+                    json=request_body,
                 )
                 response.raise_for_status()
 
@@ -95,12 +117,45 @@ class ImageGeneratorService:
                 if enable_nsfw_check:
                     nsfw_detected, nsfw_score = await self._check_nsfw(image_bytes)
 
-                return image_bytes, "flux", actual_width, actual_height, nsfw_detected, nsfw_score
+                result = (image_bytes, "flux", actual_width, actual_height, nsfw_detected, nsfw_score)
+                
+                if settings.CACHE_ENABLED:
+                    image_cache.set(cache_key, result)
+                    logger.info(f"Image cached: {prompt[:50]}...")
+                
+                return result
 
         except httpx.HTTPError as e:
             raise ImageGenerationException(
                 details={"reason": f"air.fail API error: {str(e)}"}
             )
+
+    def _format_request_headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {settings.AIRFAIL_API_KEY}",
+            "Content-Type": "application/json",
+            "User-Agent": "TipBot-ML/1.0",
+        }
+
+    def _format_request_body(
+        self,
+        prompt: str,
+        negative_prompt: str | None,
+        width: int,
+        height: int,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "prompt": prompt,
+            "width": width,
+            "height": height,
+            "num_images": settings.IMAGE_NUM_IMAGES,
+            "model": settings.AIRFAIL_MODEL_ID,
+        }
+
+        if negative_prompt:
+            body["negative_prompt"] = negative_prompt
+
+        return body
 
     async def _check_nsfw(self, image_bytes: bytes) -> tuple[bool, float]:
         try:
