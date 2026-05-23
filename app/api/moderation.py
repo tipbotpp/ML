@@ -111,6 +111,4 @@ async def moderation_check(
         moderation_cache.set(cache_key, result)
     
     return result
-    
-    return result
 
