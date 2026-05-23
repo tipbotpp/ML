@@ -54,70 +54,71 @@ async def synthesize(
     _ = Depends(verify_internal_secret),
 ):
     try:
-        validation = ParameterValidator.validate_tts_params(
-            request.text,
+        try:
+            validation = ParameterValidator.validate_tts_params(
+                request.text,
+                request.voice,
+                settings.TTS_SAMPLE_RATE
+            )
+            logger.info("tts.validation", validation=validation)
+        except ValueError as e:
+            logger.error("tts.validation_error", error=str(e))
+            raise TTSGenerationException(details={"reason": str(e)})
+
+        text = _build_tts_prompt(request)
+        formatted_request = RequestFormatter.format_tts_api_request(
+            text,
             request.voice,
             settings.TTS_SAMPLE_RATE
         )
-        logger.info("tts.validation", validation=validation)
-    except ValueError as e:
-        logger.error("tts.validation_error", error=str(e))
-        raise TTSGenerationException(details={"reason": str(e)})
+        logger.info("tts.formatted_request", data=formatted_request)
 
-    text = _build_tts_prompt(request)
-    formatted_request = RequestFormatter.format_tts_api_request(
-        text,
-        request.voice,
-        settings.TTS_SAMPLE_RATE
-    )
-    logger.info("tts.formatted_request", data=formatted_request)
+        sanitized_text = formatted_request["text"]
+        voice = formatted_request["voice"]
 
-    sanitized_text = formatted_request["text"]
-    voice = formatted_request["voice"]
+        if settings.CACHE_ENABLED:
+            cache_key = tts_cache.generate_key(sanitized_text, voice)
+            cached_result = tts_cache.get(cache_key)
+            if cached_result is not None:
+                logger.info("tts.cache_hit", donation_id=request.donation_id)
+                cached_audio_bytes, cached_duration = cached_result
+                
+                key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
+                audio_key = await s3.upload(
+                    bucket=settings.S3_BUCKET_AUDIO,
+                    key=key,
+                    data=cached_audio_bytes,
+                    content_type="audio/wav",
+                )
+                
+                return TTSResponse(
+                    audio_key=audio_key,
+                    duration_sec=cached_duration,
+                    donation_id=request.donation_id,
+                )
 
-    if settings.CACHE_ENABLED:
-        cache_key = tts_cache.generate_key(sanitized_text, voice)
-        cached_result = tts_cache.get(cache_key)
-        if cached_result is not None:
-            logger.info("tts.cache_hit", donation_id=request.donation_id)
-            cached_audio_bytes, cached_duration = cached_result
-            
-            key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
-            audio_key = await s3.upload(
-                bucket=settings.S3_BUCKET,
-                key=key,
-                data=cached_audio_bytes,
-                content_type="audio/wav",
-            )
-            
-            return TTSResponse(
-                audio_key=audio_key,
-                duration_sec=cached_duration,
-                donation_id=request.donation_id,
-            )
+        audio_bytes, duration_sec = silero.generate(sanitized_text, voice=voice)
+        
+        response_info = ResponseFormatter.format_tts_response(audio_bytes, duration_sec)
+        logger.info("tts.generation_complete", response_info=response_info)
 
-    audio_bytes, duration_sec = silero.generate(sanitized_text, voice=voice)
-    
-    response_info = ResponseFormatter.format_tts_response(audio_bytes, duration_sec)
-    logger.info("tts.generation_complete", response_info=response_info)
+        if settings.CACHE_ENABLED:
+            tts_cache.set(cache_key, (audio_bytes, duration_sec))
+            logger.info("tts.cache_set", donation_id=request.donation_id)
 
-    if settings.CACHE_ENABLED:
-        tts_cache.set(cache_key, (audio_bytes, duration_sec))
-        logger.info("tts.cache_set", donation_id=request.donation_id)
+        key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
+        audio_key = await s3.upload(
+            bucket=settings.S3_BUCKET_AUDIO,
+            key=key,
+            data=audio_bytes,
+            content_type="audio/wav",
+        )
 
-    key = f"tts/{request.donation_id}/{uuid.uuid4()}.wav"
-    audio_key = await s3.upload(
-        bucket=settings.S3_BUCKET,
-        key=key,
-        data=audio_bytes,
-        content_type="audio/wav",
-    )
-
-    return TTSResponse(
-        audio_key=audio_key,
-        duration_sec=duration_sec,
-        donation_id=request.donation_id,
-    )
+        return TTSResponse(
+            audio_key=audio_key,
+            duration_sec=duration_sec,
+            donation_id=request.donation_id,
+        )
 
     except Exception as e:
         import traceback
