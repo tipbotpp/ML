@@ -58,7 +58,7 @@ async def generate_image(
     except ValueError as e:
         logger.error("image.validation_error", error=str(e))
         error_response = ErrorFormatter.format_validation_error("image_request", str(e))
-        raise ValueError(str(e))
+        raise ImageGenerationException(details={"reason": str(e)})
 
     prompt = _build_generation_prompt(request)
     formatted_request = RequestFormatter.format_image_api_request(
@@ -89,7 +89,7 @@ async def generate_image(
 
     key = f"images/{request.donation_id}/{uuid.uuid4()}.png"
     image_key = await s3.upload(
-        bucket=settings.S3_BUCKET,
+        bucket=settings.S3_BUCKET_IMAGE,
         key=key,
         data=image_bytes,
         content_type="image/png",
