@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
-    INTERNAL_SECRET: str = "ml_secret_key"
+    INTERNAL_SECRET: str
 
     LOG_LEVEL: str = "INFO"
 
@@ -21,14 +21,15 @@ class Settings(BaseSettings):
     S3_HOST: str = "http://localhost:9000"
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
-    S3_BUCKET: str = "audio"
+    S3_BUCKET_AUDIO: str = "audio"
+    S3_BUCKET_IMAGE: str = "images"
 
     IMAGE_PROVIDER: str = "stable_diffusion"
     IMAGE_WIDTH: int = 1024
     IMAGE_HEIGHT: int = 1024
     IMAGE_NUM_IMAGES: int = 1
     IMAGE_TIMEOUT_SEC: float = 120.0
-    IMAGE_NSFW_CHECK_ENABLED: bool = True
+    IMAGE_NSFW_CHECK_ENABLED: bool = False
     IMAGE_NSFW_THRESHOLD: float = 0.5
 
     AIRFAIL_API_KEY: str = ""
