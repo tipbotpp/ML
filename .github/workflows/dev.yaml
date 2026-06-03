@@ -55,20 +55,15 @@ jobs:
             echo "S3_SECRET_KEY='${{ secrets.DEV_S3_SECRET_KEY }}'" >> .env
             echo "S3_BUCKET='${{ secrets.DEV_S3_BUCKET }}'" >> .env
             echo "IMAGE_PROVIDER='${{ secrets.DEV_IMAGE_PROVIDER }}'" >> .env
-            echo "IMAGE_DEFAULT_STYLE='${{ secrets.DEV_IMAGE_DEFAULT_STYLE }}'" >> .env
             echo "IMAGE_WIDTH=${{ secrets.DEV_IMAGE_WIDTH }}" >> .env
             echo "IMAGE_HEIGHT=${{ secrets.DEV_IMAGE_HEIGHT }}" >> .env
             echo "IMAGE_NUM_IMAGES=${{ secrets.DEV_IMAGE_NUM_IMAGES }}" >> .env
             echo "IMAGE_TIMEOUT_SEC=${{ secrets.DEV_IMAGE_TIMEOUT_SEC }}" >> .env
             echo "IMAGE_NSFW_CHECK_ENABLED=${{ secrets.DEV_IMAGE_NSFW_CHECK_ENABLED }}" >> .env
             echo "IMAGE_NSFW_THRESHOLD=${{ secrets.DEV_IMAGE_NSFW_THRESHOLD }}" >> .env
-            echo "IMAGE_POLL_INTERVAL_INITIAL=${{ secrets.DEV_IMAGE_POLL_INTERVAL_INITIAL }}" >> .env
-            echo "IMAGE_POLL_INTERVAL_MAX=${{ secrets.DEV_IMAGE_POLL_INTERVAL_MAX }}" >> .env
-            echo "IMAGE_POLL_BACKOFF_FACTOR=${{ secrets.DEV_IMAGE_POLL_BACKOFF_FACTOR }}" >> .env
-            echo "KANDINSKY_API_URL='${{ secrets.DEV_KANDINSKY_API_URL }}'" >> .env
-            echo "KANDINSKY_API_KEY='${{ secrets.DEV_KANDINSKY_API_KEY }}'" >> .env
-            echo "KANDINSKY_SECRET_KEY='${{ secrets.DEV_KANDINSKY_SECRET_KEY }}'" >> .env
-            echo "KANDINSKY_MODEL_ID=${{ secrets.DEV_KANDINSKY_MODEL_ID }}" >> .env
+            echo "AIRFAIL_API_KEY='${{ secrets.DEV_AIRFAIL_API_KEY }}'" >> .env
+            echo "AIRFAIL_API_URL='${{ secrets.DEV_AIRFAIL_API_URL }}'" >> .env
+            echo "AIRFAIL_MODEL_ID='${{ secrets.DEV_AIRFAIL_MODEL_ID }}'" >> .env
 
             export DOCKER_BUILDKIT=1
             docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build ml

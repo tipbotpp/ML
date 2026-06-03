@@ -21,8 +21,7 @@ class Settings(BaseSettings):
     S3_HOST: str = "http://localhost:9000"
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
-    S3_BUCKET_AUDIO: str = "audio"
-    S3_BUCKET_IMAGE: str = "images"
+    S3_BUCKET: str = "tipbot-dev"
 
     IMAGE_PROVIDER: str = "stable_diffusion"
     IMAGE_WIDTH: int = 1024
