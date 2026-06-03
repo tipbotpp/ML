@@ -5,7 +5,6 @@ from enum import Enum
 
 class TextSanitizer:
     MAX_LENGTH = 2000
-    CYRILLIC_PATTERN = re.compile(r'^[\u0400-\u04FF\s\d\p{P}]*$')
     EMOJI_PATTERN = re.compile(r'[\U0001F300-\U0001F9FF]|[\u2600-\u27BF]')
     
     @classmethod
