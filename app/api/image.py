@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 
 from app.config import settings
 from app.dependencies import get_s3, verify_internal_secret
+from app.exceptions import ImageGenerationException
 from app.schemas.image import ImageGenerationRequest, ImageGenerationResponse
 from app.services.image_generation import image_generator
 from app.services.logger import get_logger
