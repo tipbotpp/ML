@@ -24,11 +24,12 @@ class MLException(HTTPException):
 
 class TTSGenerationException(MLException):
 
-    def __init__(self):
+    def __init__(self, details: dict | None = None):
 
         super().__init__(
             code="TTS_ERROR",
             message="TTS generation failed",
+            details=details,
             status_code=500
         )
 
