@@ -43,20 +43,24 @@ async def _periodic_cache_cleanup():
 async def lifespan(app: FastAPI):
     global _cleanup_task
     
-    async with S3Client() as s3:
-        app.state.s3 = s3
-        
-        if settings.CACHE_ENABLED:
-            _cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
-        
+    s3 = S3Client()
+    await s3.__aenter__()
+    app.state.s3 = s3
+    
+    if settings.CACHE_ENABLED:
+        _cleanup_task = asyncio.create_task(_periodic_cache_cleanup())
+    
+    try:
         yield
-        
+    finally:
         if _cleanup_task:
             _cleanup_task.cancel()
             try:
                 await _cleanup_task
             except asyncio.CancelledError:
                 pass
+        
+        await s3.__aexit__(None, None, None)
 
 
 app = FastAPI(lifespan=lifespan)
