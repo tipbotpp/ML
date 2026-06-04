@@ -31,10 +31,19 @@ class S3Client:
             await self._client.__aexit__(exc_type, exc_val, exc_tb)
 
     async def upload(self, bucket: str, key: str, data: bytes, content_type: str) -> str:
-        await self._client.put_object(
-            Bucket=bucket,
-            Key=key,
-            Body=data,
-            ContentType=content_type,
-        )
-        return key
+        if not self._client:
+            raise RuntimeError("S3Client not initialized. Use async context manager: async with S3Client() as s3:")
+        
+        if not bucket or not key or not data:
+            raise ValueError(f"Invalid upload parameters: bucket={bool(bucket)}, key={bool(key)}, data_len={len(data) if data else 0}")
+        
+        try:
+            await self._client.put_object(
+                Bucket=bucket,
+                Key=key,
+                Body=data,
+                ContentType=content_type,
+            )
+            return key
+        except Exception as e:
+            raise RuntimeError(f"S3 upload failed: {str(e)}")
