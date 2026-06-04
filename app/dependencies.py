@@ -10,4 +10,6 @@ async def verify_internal_secret(x_internal_secret: str = Header(...)):
 
 
 async def get_s3(request: Request) -> S3Client:
+    if not hasattr(request.app.state, 's3') or request.app.state.s3 is None:
+        raise RuntimeError("S3Client not initialized in app state")
     return request.app.state.s3
