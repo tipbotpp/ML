@@ -29,6 +29,7 @@ class TextSanitizer:
         
         text = text.strip()
         text = cls._normalize_whitespace(text)
+        text = cls._convert_latin_to_cyrillic(text)
         text = cls._convert_numbers_to_text(text)
         text = cls._remove_special_tts_chars(text)
         
@@ -41,7 +42,7 @@ class TextSanitizer:
     @classmethod
     def sanitize_for_image_prompt(cls, text: str, max_length: int = 1000) -> str:
         if not text or not isinstance(text, str):
-            return ""
+            return "default image"
         
         text = text.strip()
         text = cls._normalize_whitespace(text)
@@ -50,6 +51,12 @@ class TextSanitizer:
         
         if len(text) > max_length:
             text = text[:max_length].rsplit(' ', 1)[0]
+        
+        text = text.strip()
+        
+        
+        if not text or len(text.strip()) == 0:
+            return "default image"
         
         return text
     
@@ -73,18 +80,30 @@ class TextSanitizer:
     def _convert_numbers_to_text(text: str) -> str:
         ones = ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять']
         tens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто']
+        teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать']
         
-        def convert_number(match):
-            num = int(match.group())
-            if num < 10:
+        def convert_number(num: int) -> str:
+            if num == 0:
+                return 'ноль'
+            elif num < 10:
                 return ones[num]
+            elif num < 20:
+                return teens[num - 10]
             elif num < 100:
                 return tens[num // 10] + (' ' + ones[num % 10] if num % 10 != 0 else '')
             elif num < 1000:
-                return ones[num // 100] + ' сто' + (' ' + convert_number(re.match(r'\d+', str(num % 100))) if num % 100 != 0 else '')
-            return str(num)
+                result = ones[num // 100] + ' сто'
+                remainder = num % 100
+                if remainder != 0:
+                    result += ' ' + convert_number(remainder)
+                return result
+            else:
+                return str(num)
         
-        return re.sub(r'\d+', convert_number, text)
+        def replace_match(match):
+            return convert_number(int(match.group()))
+        
+        return re.sub(r'\d+', replace_match, text)
     
     @staticmethod
     def _remove_special_tts_chars(text: str) -> str:
@@ -94,6 +113,37 @@ class TextSanitizer:
     @staticmethod
     def _remove_emoji(text: str) -> str:
         return re.sub(r'[\U0001F300-\U0001F9FF]|[\u2600-\u27BF]|[\U0001F900-\U0001F9FF]', '', text)
+    
+    @staticmethod
+    def _convert_latin_to_cyrillic(text: str) -> str:
+        latin_to_cyrillic = {
+            'A': 'А', 'a': 'а',
+            'B': 'В', 'b': 'б',
+            'C': 'С', 'c': 'с',
+            'E': 'Е', 'e': 'е',
+            'H': 'Н', 'h': 'н',
+            'K': 'К', 'k': 'к',
+            'M': 'М', 'm': 'м',
+            'O': 'О', 'o': 'о',
+            'P': 'Р', 'p': 'р',
+            'T': 'Т', 't': 'т',
+            'X': 'Х', 'x': 'х',
+            'Y': 'У', 'y': 'у',
+        }
+        
+        result = []
+        for char in text:
+            if char in latin_to_cyrillic:
+                result.append(latin_to_cyrillic[char])
+            elif ord(char) > 127 and char not in '0123456789':
+                
+                result.append(char)
+            elif char.isdigit() or char in ' .,!?;:-':
+                
+                result.append(char)
+            
+        
+        return ''.join(result)
     
     @staticmethod
     def _ensure_proper_ending(text: str) -> str:
@@ -156,11 +206,18 @@ class ParameterValidator:
     
     @staticmethod
     def validate_image_params(prompt: str, negative_prompt: str, width: int, height: int) -> dict:
-        if not isinstance(prompt, str) or not prompt.strip():
+        if not isinstance(prompt, str) or not prompt or not prompt.strip():
             raise ValueError("Prompt must be non-empty string")
         
-        if len(prompt) > 1000:
-            raise ValueError(f"Prompt too long: {len(prompt)} > 1000")
+        prompt_stripped = prompt.strip()
+        if len(prompt_stripped) > 1000:
+            raise ValueError(f"Prompt too long: {len(prompt_stripped)} > 1000")
+        
+        if width is None or height is None:
+            raise ValueError("Width and height must be specified")
+        
+        if not isinstance(width, int) or not isinstance(height, int):
+            raise ValueError(f"Width and height must be integers, got {type(width).__name__} and {type(height).__name__}")
         
         valid_widths = [512, 768, 1024, 1280]
         valid_heights = [512, 768, 1024, 1280]
@@ -175,7 +232,7 @@ class ParameterValidator:
             raise ValueError(f"Negative prompt too long: {len(negative_prompt)} > 500")
         
         return {
-            "prompt_length": len(prompt),
+            "prompt_length": len(prompt_stripped),
             "negative_prompt_length": len(negative_prompt) if negative_prompt else 0,
             "dimensions": f"{width}x{height}",
             "is_valid": True
@@ -222,12 +279,16 @@ class RequestFormatter:
         sanitized_prompt = TextSanitizer.sanitize_for_image_prompt(prompt)
         sanitized_negative = (
             TextSanitizer.sanitize_for_image_prompt(negative_prompt)
-            if negative_prompt else ""
+            if negative_prompt else None
         )
         
+        # Ensure prompt is never empty or None
+        if not sanitized_prompt or not sanitized_prompt.strip():
+            sanitized_prompt = "default image"
+        
         return {
-            "prompt": sanitized_prompt,
-            "negative_prompt": sanitized_negative or None,
+            "prompt": sanitized_prompt.strip(),
+            "negative_prompt": sanitized_negative.strip() if sanitized_negative and sanitized_negative.strip() else None,
             "width": width,
             "height": height,
             "model": model,
@@ -260,15 +321,24 @@ class ResponseFormatter:
         image_bytes: bytes,
         width: int,
         height: int,
-        nsfw_detected: bool = False,
-        nsfw_score: float = 0.0
+        nsfw_detected: bool | None = None,
+        nsfw_score: float | None = None
     ) -> dict:
+        if not image_bytes or len(image_bytes) == 0:
+            raise ValueError("Image bytes cannot be empty")
+        
+        if not isinstance(width, int) or not isinstance(height, int):
+            raise ValueError("Width and height must be integers")
+        
+        if width <= 0 or height <= 0:
+            raise ValueError("Width and height must be positive")
+        
         return {
             "image_size_bytes": len(image_bytes),
             "dimensions": f"{width}x{height}",
             "format": "png",
-            "nsfw_detected": bool(nsfw_detected),
-            "nsfw_score": float(nsfw_score),
+            "nsfw_detected": bool(nsfw_detected) if nsfw_detected is not None else False,
+            "nsfw_score": float(nsfw_score) if nsfw_score is not None else 0.0,
         }
 
 
