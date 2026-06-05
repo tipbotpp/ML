@@ -63,7 +63,7 @@ jobs:
             echo "IMAGE_NSFW_THRESHOLD=${{ secrets.DEV_IMAGE_NSFW_THRESHOLD }}" >> .env
             echo "AIRFAIL_API_KEY='${{ secrets.DEV_AIRFAIL_API_KEY }}'" >> .env
             echo "AIRFAIL_API_URL='${{ secrets.DEV_AIRFAIL_API_URL }}'" >> .env
-            echo "AIRFAIL_MODEL_ID='${{ secrets.DEV_AIRFAIL_MODEL_ID }}'" >> .env
+            echo "AIRFAIL_MODEL_VERSION='${{ secrets.DEV_AIRFAIL_MODEL_VERSION }}'" >> .env
 
             export DOCKER_BUILDKIT=1
             docker compose -f ${{ secrets.DEV_INFRA_DIR }}/docker-compose.yaml up -d --build ml
