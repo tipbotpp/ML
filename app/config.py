@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     IMAGE_NSFW_THRESHOLD: float = 0.5
 
     AIRFAIL_API_KEY: str = ""
-    AIRFAIL_API_URL: str = "https://app.air.fail/images/flux"
-    AIRFAIL_MODEL_ID: str = "flux"
+    AIRFAIL_API_URL: str = "https://api.air.fail/public/image/flux"
+    AIRFAIL_MODEL_VERSION: str = "flux-dev"
 
     CACHE_ENABLED: bool = True
     CACHE_MODERATION_TTL_SECONDS: int = 1800

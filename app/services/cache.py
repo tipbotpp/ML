@@ -1,12 +1,13 @@
 import hashlib
-import logging
 import sys
 from typing import Any, Optional, TypeVar, Generic
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from collections import OrderedDict
 
-logger = logging.getLogger(__name__)
+from app.services.logger import get_logger
+
+logger = get_logger().bind(layer="service", module="cache")
 
 T = TypeVar("T")
 
@@ -63,13 +64,13 @@ class CacheManager:
     def get(self, key: str) -> Optional[Any]:
         if key not in self._cache:
             self._stats["misses"] += 1
-            logger.debug(f"Cache miss: {key}")
+            logger.debug("cache.miss", key=key[:16])
             return None
 
         entry = self._cache[key]
         if entry.is_expired():
             self._stats["misses"] += 1
-            logger.debug(f"Cache expired: {key}")
+            logger.debug("cache.expired", key=key[:16])
             del self._cache[key]
             self._access_order.pop(key, None)
             return None
@@ -78,7 +79,7 @@ class CacheManager:
         entry.last_accessed = datetime.now()
         self._access_order.move_to_end(key)
         self._stats["hits"] += 1
-        logger.debug(f"Cache hit: {key} (access count: {entry.access_count})")
+        logger.debug("cache.hit", key=key[:16], access_count=entry.access_count)
         return entry.value
 
     def set(
@@ -103,9 +104,7 @@ class CacheManager:
         self._access_order.move_to_end(key)
         self._stats["sets"] += 1
 
-        logger.debug(
-            f"Cache set: {key}, TTL: {effective_ttl}s, Size: {entry_size} bytes"
-        )
+        logger.debug("cache.set", key=key[:16], ttl_seconds=effective_ttl, size_bytes=entry_size)
         return True
 
     def _ensure_capacity(self, new_key: str, new_entry_size: int) -> None:
@@ -133,7 +132,7 @@ class CacheManager:
         self._stats["evictions"] += 1
 
         evicted_size = evicted_entry.get_size_bytes()
-        logger.debug(f"LRU eviction: {lru_key} ({evicted_size} bytes)")
+        logger.debug("cache.evict_lru", key=lru_key[:16], size_bytes=evicted_size)
         return evicted_size
 
     def clear(self, prefix: Optional[str] = None) -> int:
@@ -141,14 +140,14 @@ class CacheManager:
             count = len(self._cache)
             self._cache.clear()
             self._access_order.clear()
-            logger.info(f"Cache cleared completely ({count} entries)")
+            logger.info("cache.cleared_all", count=count)
             return count
         else:
             keys_to_delete = [k for k in self._cache.keys() if k.startswith(prefix)]
             for k in keys_to_delete:
                 del self._cache[k]
                 self._access_order.pop(k, None)
-            logger.info(f"Cache cleared for prefix: {prefix} ({len(keys_to_delete)} entries)")
+            logger.info("cache.cleared_prefix", prefix=prefix, count=len(keys_to_delete))
             return len(keys_to_delete)
 
     def cleanup_expired(self) -> int:
@@ -157,7 +156,7 @@ class CacheManager:
             del self._cache[k]
             self._access_order.pop(k, None)
         if expired_keys:
-            logger.info(f"Cleanup: Removed {len(expired_keys)} expired entries")
+            logger.info("cache.cleanup_expired", removed=len(expired_keys))
         return len(expired_keys)
 
     def get_stats(self) -> dict[str, Any]:
